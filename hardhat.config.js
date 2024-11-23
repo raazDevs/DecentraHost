@@ -15,8 +15,11 @@ module.exports = {
       gasPrice: 1000000000,
     },
   },
-  solidity: "0.8.24",
+  solidity: "0.8.27",
   allowUnlimitedContractSize: true,
   throwOnTransactionFailures: true,
   throwOnCallFailures: true,
   loggingEnabled: true,
+};
+
+// npx hardhat ignition deploy ./ignition/modules/WebpageStorageModule.js --network BitTorrent
