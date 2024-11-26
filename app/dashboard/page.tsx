@@ -363,14 +363,14 @@ export default function Dashboard() {
                       />
                     </div>
                     <Button
-                      onClick={selectedWebpage ? handleUpdate : handleDeploy}
-                      // onClick={handleDeploy}
+                      // onClick={selectedWebpage ? handleUpdate : handleDeploy}
+                      onClick={handleDeploy}
                       disabled={
                         isDeploying ||
                         !domain ||
-                        !content ||
-                        !isInitialized ||
-                        userId === null
+                        !content
+                        // !isInitialized ||
+                        // userId === null
                       }
                       size="lg"
                       className="bg-blue-600 hover:bg-blue-500 text-white"

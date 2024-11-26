@@ -41,7 +41,7 @@ export default function RootLayout({
         
 
         <PrivyProvider
-      appId="cm3iixin0001jtl87apiu1m8v"
+       appId="cm3ysvmzr00ob10kh881t8ewa"
       config={{
         appearance: {
           theme: "dark",
