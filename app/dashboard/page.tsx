@@ -24,11 +24,15 @@ import {
     CardContent,
     CardDescription,
   } from "@/components/ui/card"; 
-import {Layout, Rocket, GitBranch, Zap, Cpu, Network, Search, Globe, Shield, Clock, Activity} from 'lucide-react'
+import {Layout, Rocket, GitBranch, Zap, Cpu, Network, Search, Globe, Shield, Clock, Activity, Loader2} from 'lucide-react'
 import { Label } from "@radix-ui/react-dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { createWebpageWithName, getUserIdByEmail, getUserWebpages, getWebpageContent, initializeClients, updateWebpageContent } from "@/utils/db/actions";
+import { usePrivy } from "@privy-io/react-auth";
+import { useRouter } from "next/navigation";
+import DeploymentVisual from "@/components/DeploymentVisual";
 
 export default function Dashboard() {
     const sidebarItems = [
@@ -43,41 +47,226 @@ export default function Dashboard() {
         { name: "Smart Contracts", icon: Shield },
       ] as any;
 
-    const {user, authenticated} = usePrivy()
-    const [selectedWebpage, setSelectedWebpage] = useState<Webpage | null>(null);
-    const [activeTab, setActiveItem] = useState('Sites');
-    const [domain, setDomain] = useState("");
-    const [content, setContent] = useState("");
-    const [isDeploying, setIDeploying] = useState(false);
-    const [deploymentError, setDeploymentError] = useState("");
+      const [code, setCode] = useState(``);
+      const [githubUrl, setGithubUrl] = useState("");
+      const [deployedUrl, setDeployedUrl] = useState("");
+      const [isDeploying, setIsDeploying] = useState(false);
+      const [livePreview, setLivePreview] = useState(code);
+      const [activeTab, setActiveTab] = useState("Sites");
+      const [domain, setDomain] = useState("");
+      const [content, setContent] = useState("");
+      const [deploymentError, setDeploymentError] = useState("");
+      const { user, authenticated } = usePrivy();
+      const [isInitialized, setIsInitialized] = useState(false);
+      const [userId, setUserId] = useState<number | null>(null);
+      const [w3name, setW3name] = useState<string | null>(null);
+      const [userWebpages, setUserWebpages] = useState<Webpage[]>([]);
+      const [selectedWebpage, setSelectedWebpage] = useState<Webpage | null>(null);
+      const router = useRouter();
+    
 
     useEffect(() => {
       async function init() {
-        if(authenticated && user?.email?.address) {
-          await initializedClients(user.email.address);
+          if(authenticated && user?.email?.address) {
+            try{
+              console.log(user);
+
+            await initializeClients(user.email.address);
+            setIsInitialized(true); 
+          } catch (error) {
+          console.error("Failed to initialize clients:", error);
+          setDeploymentError("");
+        } 
+      }
+      }
+      init()
+    }, [authenticated, user]);
+
+
+    useEffect(() => {
+      async function fetchUserId() {
+        if (authenticated && user?.email?.address) {
+          const fetchedUserId = await getUserIdByEmail(user?.email?.address);
+          console.log(fetchUserId);
+          console.log(user.email.address);
+          setUserId(fetchedUserId);
         }
       }
-    })
+  
+      fetchUserId();
+    }, [authenticated, user]);
 
     // handle deployment
+    console.log(userId);
     const handleDeploy = async () => {
       setIsDeploying(true);
       setDeploymentError("");
 
       try {
         //
+        if(!isInitialized){
+          throw new Error("Clients not initialized");
+        }
+        if (userId === null){
+          throw new Error("User not authenticated or ID not found");
+        }
+        const { webpage, txHash, cid, deploymentUrl, name, w3nameUrl } =
+        await createWebpageWithName(userId, domain, content);
+
+      setDeployedUrl(w3nameUrl || deploymentUrl);
+      setW3name(name);
+      console.log(
+        `Deployed successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${
+          w3nameUrl || deploymentUrl
+        }, W3name: ${name}`
+      );
+
+      // Refresh the user's webpages
+      const updatedWebpages = await getUserWebpages(userId);
+      setUserWebpages(updatedWebpages as Webpage[]);
       }
       catch(error){
-
+      console.error("Deployment failed:", error);
+      setDeploymentError("Deployment failed. Please try again.");
+      } finally{
+        setIsDeploying(false);
       }
-    }
+
+    };
+
+    const handleUpdate = async () => {
+      setIsDeploying(true);
+      setDeploymentError("");
+      try {
+        if (!isInitialized || userId === null || !selectedWebpage) {
+          throw new Error(
+            "Cannot update: missing initialization, user ID, or selected webpage"
+          );
+        }
+  
+        const { txHash, cid, deploymentUrl, w3nameUrl } =
+          await updateWebpageContent(
+            userId,
+            selectedWebpage.webpages.id,
+            content
+          );
+  
+        setDeployedUrl(w3nameUrl || deploymentUrl);
+        console.log(
+          `Updated successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${
+            w3nameUrl || deploymentUrl
+          }`
+        );
+        setLivePreview(content);
+  
+        // Update the selected webpage in the state
+        setSelectedWebpage((prev) => {
+          if (!prev) return null;
+          return {
+            webpages: {
+              ...prev.webpages,
+              cid,
+            },
+            deployments: {
+              id: prev.deployments?.id ?? 0,
+              deploymentUrl,
+              transactionHash: txHash,
+              deployedAt: new Date(),
+            },
+          };
+        });
+  
+        // Refresh the user's webpages
+        const updatedWebpages = await getUserWebpages(userId);
+        setUserWebpages(updatedWebpages as Webpage[]);
+      } catch (error: any) {
+        console.error("Update failed:", error);
+        setDeploymentError(`Update failed: ${error.message}`);
+      } finally {
+        setIsDeploying(false);
+      }
+    };
+  
+    useEffect(() => {
+      async function fetchUserWebpages() {
+        if (userId) {
+          const webpages = await getUserWebpages(userId);
+          console.log("=======web pages", webpages);
+          setUserWebpages(webpages as Webpage[]);
+        }
+      }
+      fetchUserWebpages();
+    }, [userId]);
+  
+    const handleEdit = async (webpage: Webpage) => {
+      setSelectedWebpage(webpage);
+      setDomain(webpage.webpages.domain);
+      const webpageContent = await getWebpageContent(webpage.webpages.id);
+      setContent(webpageContent);
+      setW3name(webpage.webpages.name);
+      setActiveTab("Deploy");
+    };
+  
+    const handleUrlClick = (url: string) => {
+      window.open(url, "_blank", "noopener,noreferrer");
+    };
+  
+    const handleAIWebsiteDeploy = async (domain: string, content: string) => {
+      setAiDeploymentStatus({
+        isDeploying: true,
+        deployedUrl: "",
+        ipfsUrl: "",
+        error: "",
+      });
+      setDeploymentError("");
+      console.log(userId);
+  
+      try {
+        if (!isInitialized || userId === null) {
+          throw new Error("Cannot deploy: missing initialization or user ID");
+        }
+  
+        const { webpage, txHash, cid, deploymentUrl, name, w3nameUrl } =
+          await createWebpageWithName(userId, domain, content);
+  
+        const ipfsUrl = `https://dweb.link/ipfs/${cid}`;
+        const finalDeployedUrl = w3nameUrl || deploymentUrl;
+  
+        setAiDeploymentStatus({
+          isDeploying: false,
+          deployedUrl: finalDeployedUrl,
+          ipfsUrl: ipfsUrl,
+          error: "",
+        });
+  
+        setDeployedUrl(finalDeployedUrl);
+        setW3name(name);
+        console.log(
+          `Deployed AI-generated website successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${finalDeployedUrl}, W3name: ${name}`
+        );
+  
+        // Refresh the user's webpages
+        const updatedWebpages = await getUserWebpages(userId);
+        setUserWebpages(updatedWebpages as Webpage[]);
+      } catch (error: any) {
+        console.error("AI website deployment failed:", error);
+        setAiDeploymentStatus({
+          isDeploying: false,
+          deployedUrl: "",
+          ipfsUrl: "",
+          error: `AI website deployment failed: ${error.message}`,
+        });
+        setDeploymentError(`AI website deployment failed: ${error.message}`);
+      }
+    };
+  
     return(
       <div className="min-h-screen bg-black text-grey-300">
         <div className="flex">
             <Sidebar 
             items={sidebarItems}
             activeItem={activeTab}
-            setActiveItem={setActiveItem}
+            setActiveItem={setActiveTab}
             />
 
             <div className="flex-1 p-10 ml-64">
@@ -175,19 +364,19 @@ export default function Dashboard() {
                     </div>
                     <Button
                       onClick={selectedWebpage ? handleUpdate : handleDeploy}
-                      // disabled={
-                      //   isDeploying ||
-                      //   !domain ||
-                      //   !content ||
-                      //   !isInitialized ||
-                      //   userId === null
-                      // }
+                      // onClick={handleDeploy}
+                      disabled={
+                        isDeploying ||
+                        !domain ||
+                        !content ||
+                        !isInitialized ||
+                        userId === null
+                      }
                       size="lg"
                       className="bg-blue-600 hover:bg-blue-500 text-white"
                     >
                       {selectedWebpage ? "Update Website" : "Deploy to HTTP3"}
-                      </Button>
-                      {/* {isDeploying ? (
+                      {isDeploying ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                           {selectedWebpage ? "Updating..." : "Deploying..."}
@@ -203,7 +392,7 @@ export default function Dashboard() {
                     )}
                     {deployedUrl && (
                       <DeploymentVisual deployedUrl={deployedUrl} />
-                    )} */}
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -214,7 +403,7 @@ export default function Dashboard() {
                     <CardTitle className="text-white">Preview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="border border-[#18181b] p-4 rounded-lg">
+                    <div className="border bg-white p-4 rounded-lg">
                       <iframe
                         srcDoc={content}
                         style={{

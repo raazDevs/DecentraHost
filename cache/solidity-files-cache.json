@@ -1,8 +1,8 @@
 {
   "_format": "hh-sol-cache-2",
   "files": {
-    "C:\\Users\\sande\\OneDrive\\Desktop\\DecentraHost\\contracts\\Lock.sol": {
-      "lastModificationDate": 1732383735918,
+    "C:\\Users\\LENOVO\\Desktop\\DecentraHost\\contracts\\Lock.sol": {
+      "lastModificationDate": 1732298363621,
       "contentHash": "1da7c271214aff7ac25799dbcbca36be",
       "sourceName": "contracts/Lock.sol",
       "solcConfig": {
@@ -37,8 +37,8 @@
         "Lock"
       ]
     },
-    "C:\\Users\\sande\\OneDrive\\Desktop\\DecentraHost\\contracts\\WebpagesStorage.sol": {
-      "lastModificationDate": 1732385981376,
+    "C:\\Users\\LENOVO\\Desktop\\DecentraHost\\contracts\\WebpagesStorage.sol": {
+      "lastModificationDate": 1732386590615,
       "contentHash": "1f0e23546fceed9ab526cd48707c32b2",
       "sourceName": "contracts/WebpagesStorage.sol",
       "solcConfig": {
