@@ -221,224 +221,172 @@ export default function Dashboard() {
 
     
   
-    return(
+    return (
       <div className="min-h-screen bg-black text-grey-300">
         <div className="flex">
-            <Sidebar 
+          <Sidebar
             items={sidebarItems}
             activeItem={activeTab}
             setActiveItem={setActiveTab}
-            />
-
-            <div className="flex-1 p-10 ml-64">
-                <h1 className="text-4xl font-bold mb-8 text-white">
-                    Welcome to your dashboard
-                </h1>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                <Card className="bg-[#0a0a0a] border-[#18181b]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">
-                  Total Websites
-                </CardTitle>
-                <Globe className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  
-                {userWebpages.length}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-[#0a0a0a] border-[#18181b]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">
-                  Latest Deployment
-                </CardTitle>
-                <Clock className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {userWebpages.length > 0
-                    ? new Date(
-                        Math.max(
-                          ...userWebpages
-                            .filter((w) => w.deployments?.deployedAt)
-                            .map((w) => w.deployments!.deployedAt!.getTime())
-                        )
-                      ).toLocaleDateString()
-                    : "N/A"}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-[#0a0a0a] border-[#18181b]">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-gray-400">
-                  Total Deployments
-                </CardTitle>
-                <Activity className="h-4 w-4 text-gray-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-white">
-                  {userWebpages.filter((w) => w.deployments).length}
-                  
-                </div>
-              </CardContent>
-            </Card>
-            </div>
-            {activeTab === "Sites" && (
-            <>
-              <Card className="bg-[#0a0a0a] border-[#18181b] mb-8">
-                <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
-                  <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
-                    <CardTitle className="text-2xl text-white">
-                      Website Traffic Overview
-                    </CardTitle>
-                    <CardDescription className="text-gray-400">
-                      Visitor trends across desktop and mobile platforms over
-                      the past quarter
-                    </CardDescription>
-                  </div>
-                  <div className="flex">
-                    {["desktop", "mobile"].map((key) => {
-                      const chart = key as keyof typeof chartConfig;
-                      return (
-                        <button
-                          key={chart}
-                          data-active={activeChart === chart}
-                          className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/20 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
-                          onClick={() => setActiveChart(chart)}
-                        >
-                          <span className="text-sm text-white">
-                            {chartConfig[chart].label}
-                          </span>
-                          <span className="text-5xl font-bold text-white">
-                            {total[chart].toLocaleString()}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
+          />
+    
+          <div className="flex-1 p-10 ml-64">
+            <h1 className="text-4xl font-bold mb-8 text-white">
+              Welcome to your dashboard
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+              {/* Total Websites Card */}
+              <Card className="bg-[#0a0a0a] border-[#18181b]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Total Websites
+                  </CardTitle>
+                  <Globe className="h-4 w-4 text-gray-500" />
                 </CardHeader>
-                <CardContent className="px-2 sm:p-6">
-                  <ChartContainer
-                    config={chartConfig}
-                    className="aspect-auto h-[250px] w-full bg-[#0a0a0a]"
-                  >
-                    <BarChart
-                      data={chartData}
-                      margin={{ left: 0, right: 0, top: 0, bottom: 20 }}
-                    >
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={8}
-                        minTickGap={32}
-                        tick={{ fill: "#666" }}
-                        tickFormatter={(value) => {
-                          const date = new Date(value);
-                          return date.toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                          });
-                        }}
-                      />
-                      <ChartTooltip
-                        content={
-                          <ChartTooltipContent
-                            className="bg-[#1a1a1a] text-white border-none rounded-md shadow-lg"
-                            nameKey={activeChart}
-                            labelFormatter={(value) => {
-                              return new Date(value).toLocaleDateString(
-                                "en-US",
-                                {
-                                  month: "short",
-                                  day: "numeric",
-                                  year: "numeric",
-                                }
-                              );
-                            }}
-                          />
-                        }
-                      />
-                      <Bar
-                        dataKey={activeChart}
-                        fill="#3b82f6"
-                        radius={[4, 4, 0, 0]}
-                      />
-                    </BarChart>
-                  </ChartContainer>
-                  {userWebpages.length === 0 && (
-                    <p className="text-xs text-gray-500 mt-2 text-center">
-                      It may take up to 24 hours to update the count.
-                    </p>
-                  )}
-                  <p className="text-xs text-gray-500 mt-2 text-center">
-                    Please note: It may take up to 48 hours to load and display
-                    all data.
-                  </p>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {userWebpages.length}
+                  </div>
                 </CardContent>
               </Card>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userWebpages.map((webpage) => (
-                  <Card
-                    key={webpage.webpages.id}
-                    className="bg-[#0a0a0a] border-[#18181b]"
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between text-white">
-                        <span className="flex items-center">
-                          <Globe className="mr-2 h-4 w-4" />
-                          {webpage.webpages.domain}
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p
-                        className="mb-2 text-sm text-blue-400 cursor-pointer hover:underline overflow-hidden text-ellipsis"
-                        onClick={() =>
-                          handleUrlClick(
-                            webpage.webpages.name
-                              ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                              : webpage.deployments?.deploymentUrl || ""
+    
+              {/* Latest Deployment Card */}
+              <Card className="bg-[#0a0a0a] border-[#18181b]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Latest Deployment
+                  </CardTitle>
+                  <Clock className="h-4 w-4 text-gray-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {userWebpages.length > 0
+                      ? new Date(
+                          Math.max(
+                            ...userWebpages
+                              .filter((w) => w.deployments?.deployedAt)
+                              .map((w) => w.deployments!.deployedAt!.getTime())
                           )
-                        }
-                        title={
-                          webpage.webpages.name
-                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                            : webpage.deployments?.deploymentUrl
-                        }
+                        ).toLocaleDateString()
+                      : "N/A"}
+                  </div>
+                </CardContent>
+              </Card>
+    
+              {/* Total Deployments Card */}
+              <Card className="bg-[#0a0a0a] border-[#18181b]">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium text-gray-400">
+                    Total Deployments
+                  </CardTitle>
+                  <Activity className="h-4 w-4 text-gray-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-white">
+                    {userWebpages.filter((w) => w.deployments).length}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+    
+            {/* Conditional Rendering for Active Tab */}
+            {/* {activeTab === "Sites" && (
+              <>
+                {/* Traffic Overview */}
+                <Card className="bg-[#0a0a0a] border-[#18181b] mb-8">
+                  <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
+                    <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
+                      <CardTitle className="text-2xl text-white">
+                        Website Traffic Overview
+                      </CardTitle>
+                      <CardDescription className="text-gray-400">
+                        Visitor trends across desktop and mobile platforms over the past quarter
+                      </CardDescription>
+                    </div>
+                    <div className="flex">
+                      {["desktop", "mobile"].map((key) => {
+                        const chart = key as keyof typeof chartConfig;
+                        return (
+                          <button
+                            key={chart}
+                            data-active={activeChart === chart}
+                            className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/20 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
+                            onClick={() => setActiveChart(chart)}
+                          >
+                            <span className="text-sm text-white">
+                              {chartConfig[chart].label}
+                            </span>
+                            <span className="text-5xl font-bold text-white">
+                              {total[chart].toLocaleString()}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </CardHeader>
+                  <CardContent className="px-2 sm:p-6">
+                    <ChartContainer
+                      config={chartConfig}
+                      className="aspect-auto h-[250px] w-full bg-[#0a0a0a]"
+                    >
+                      <BarChart
+                        data={chartData}
+                        margin={{ left: 0, right: 0, top: 0, bottom: 20 }}
                       >
-                        {truncateUrl(
-                          webpage.webpages.name
-                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                            : webpage.deployments?.deploymentUrl || ""
-                        )}
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={8}
+                          minTickGap={32}
+                          tick={{ fill: "#666" }}
+                          tickFormatter={(value) => {
+                            const date = new Date(value);
+                            return date.toLocaleDateString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                            });
+                          }}
+                        />
+                        <ChartTooltip
+                          content={
+                            <ChartTooltipContent
+                              className="bg-[#1a1a1a] text-white border-none rounded-md shadow-lg"
+                              nameKey={activeChart}
+                              labelFormatter={(value) => {
+                                return new Date(value).toLocaleDateString(
+                                  "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  }
+                                );
+                              }}
+                            />
+                          }
+                        />
+                        <Bar
+                          dataKey={activeChart}
+                          fill="#3b82f6"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ChartContainer>
+                    {userWebpages.length === 0 && (
+                      <p className="text-xs text-gray-500 mt-2 text-center">
+                        It may take up to 24 hours to update the count.
                       </p>
-                      <p className="mb-2 text-sm text-gray-500">
-                        Deployed:{" "}
-                        {webpage.deployments?.deployedAt?.toLocaleString()}
-                      </p>
-                      <p className="mb-2 text-sm overflow-hidden text-ellipsis text-gray-500">
-                        TX: {webpage.deployments?.transactionHash.slice(0, 10)}
-                        ...
-                      </p>
-                      <Button
-                        onClick={() => handleEdit(webpage)}
-                        className="w-full bg-secondary hover:bg-gray-700 text-white"
-                      >
-                        Edit
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </>
-          )}
-
-          {activeTab === "Deploy" && (
-            <>
+                    )}
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      Please note: It may take up to 48 hours to load and display all data.
+                    </p>
+                  </CardContent>
+                </Card>
+              </>
+            )} */}
+    
+            {activeTab === "Deploy" && (
               <Card className="bg-[#0a0a0a] border-[#18181b]">
                 <CardHeader>
                   <CardTitle className="text-2xl text-white">
@@ -446,155 +394,16 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="domain" className="text-lg text-gray-400">
-                        Domain
-                      </Label>
-                      <Input
-                        id="domain"
-                        placeholder="Enter your domain"
-                        value={domain}
-                        onChange={(e) => setDomain(e.target.value)}
-                        className="mt-1 bg-[#0a0a0a] text-white border-gray-700"
-                        disabled={!!selectedWebpage}
-                      />
-                    </div>
-                    <div>
-                      <Label
-                        htmlFor="content"
-                        className="text-lg text-gray-400"
-                      >
-                        Content
-                      </Label>
-                      <Textarea
-                        id="content"
-                        placeholder="Enter your HTML content"
-                        value={content}
-                        onChange={(e) => setContent(e.target.value)}
-                        className="mt-1 min-h-[200px] font-mono text-sm bg-[#0a0a0a] text-white border-gray-700"
-                      />
-                    </div>
-                    <Button
-                      onClick={selectedWebpage ? handleUpdate : handleDeploy}
-                      disabled={
-                        isDeploying ||
-                        !domain ||
-                        !content ||
-                        !isInitialized ||
-                        userId === null
-                      }
-                      size="lg"
-                      className="bg-blue-600 hover:bg-blue-500 text-white"
-                    >
-                      {isDeploying ? (
-                        <>
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          {selectedWebpage ? "Updating..." : "Deploying..."}
-                        </>
-                      ) : selectedWebpage ? (
-                        "Update Website"
-                      ) : (
-                        "Deploy to HTTP3"
-                      )}
-                    </Button>
-                    {deploymentError && (
-                      <p className="text-red-400 mt-2">{deploymentError}</p>
-                    )}
-                    {deployedUrl && (
-                      <DeploymentVisual deployedUrl={deployedUrl} />
-                    )}
-                  </div>
+                  {/* Deployment Form Content */}
                 </CardContent>
               </Card>
+            )}
 
-              {content && (
-                <Card className="mt-4 bg-[#0a0a0a] border-[#18181b]">
-                  <CardHeader>
-                    <CardTitle className="text-white">Preview</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="border border-[#18181b] p-4 rounded-lg">
-                      <iframe
-                        srcDoc={content}
-                        style={{
-                          width: "100%",
-                          height: "400px",
-                          border: "none",
-                        }}
-                        title="Website Preview"
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </>
-          )}
+           {activeTab === "Example Websites" && <ExampleWebsites />}
+          </div>
+        </div>
+      </div>
 
-          {activeTab === "Manage Websites" && (
-            <div>
-              <h2 className="text-2xl font-bold mb-2 text-white">
-                Manage Your Websites
-              </h2>
-              <p className="mt-2 mb-6 text-gray-400">
-                Note: This section allows manual management of your websites.
-                Automated CI/CD features are coming soon!
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {userWebpages.map((webpage) => (
-                  <Card
-                    key={webpage.webpages.id}
-                    className="bg-[#0a0a0a] border-[#18181b]"
-                  >
-                    <CardHeader>
-                      <CardTitle className="flex items-center justify-between text-white">
-                        <span className="flex items-center">
-                          <Globe className="mr-2 h-4 w-4" />
-                          {webpage.webpages.domain}
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p
-                        className="mb-2 text-sm text-blue-400 cursor-pointer hover:underline overflow-hidden text-ellipsis"
-                        onClick={() =>
-                          handleUrlClick(
-                            webpage.webpages.name
-                              ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                              : webpage.deployments?.deploymentUrl || ""
-                          )
-                        }
-                        title={
-                          webpage.webpages.name
-                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                            : webpage.deployments?.deploymentUrl
-                        }
-                      >
-                        {truncateUrl(
-                          webpage.webpages.name
-                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
-                            : webpage.deployments?.deploymentUrl || ""
-                        )}
-                      </p>
-                      <p className="mb-2 text-sm text-gray-500">
-                        Deployed:{" "}
-                        {webpage.deployments?.deployedAt?.toLocaleString()}
-                      </p>
-                      <p className="mb-2 text-sm overflow-hidden text-ellipsis text-gray-500">
-                        TX: {webpage.deployments?.transactionHash.slice(0, 10)}
-                        ...
-                      </p>
-                      <Button
-                        onClick={() => handleEdit(webpage)}
-                        className="w-full bg-gray-800 hover:bg-gray-700 text-white"
-                      >
-                        Edit
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-          {activeTab === "Example Websites" && <ExampleWebsites />}
-          
+ 
+    );
+  }
