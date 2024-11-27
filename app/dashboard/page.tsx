@@ -63,63 +63,65 @@ export default function Dashboard() {
       const [userWebpages, setUserWebpages] = useState<Webpage[]>([]);
       const [selectedWebpage, setSelectedWebpage] = useState<Webpage | null>(null);
       const router = useRouter();
-    
 
-    useEffect(() => {
-      async function init() {
-          if(authenticated && user?.email?.address) {
-            try{
+     
+      useEffect(() => {
+        console.log(user?.email?.address, "new")
+        async function init() {
+          if (authenticated && user?.email?.address) {
+            try {
               console.log(user);
-
-            await initializeClients(user.email.address);
-            setIsInitialized(true); 
-          } catch (error) {
-          console.error("Failed to initialize clients:", error);
-          setDeploymentError("");
-        } 
-      }
-      }
-      init()
-    }, [authenticated, user]);
-
-
-    useEffect(() => {
-      async function fetchUserId() {
-        if (authenticated && user?.email?.address) {
-          const fetchedUserId = await getUserIdByEmail(user?.email?.address);
-          console.log(fetchUserId);
-          console.log(user.email.address);
-          setUserId(fetchedUserId);
+              await initializeClients(user.email.address);
+              setIsInitialized(true);
+            } catch (error) {
+              console.error("Failed to initialize clients:", error);
+              setDeploymentError("Failed to initialize deployment. Please try again.");
+            }
+          }
+          else{
+            console.log("break")
+          }
         }
-      }
-  
-      fetchUserId();
-    }, [authenticated, user]);
-
-    // handle deployment
-    console.log(userId);
-    const handleDeploy = async () => {
-      setIsDeploying(true);
-      setDeploymentError("");
-
-      try {
-        //
-        if(!isInitialized){
-          throw new Error("Clients not initialized");
+      
+        init();
+      }, [authenticated, user]);
+    
+      useEffect(() => {
+        async function fetchUserId() {
+          if (authenticated && user?.email?.address) {
+            const fetchedUserId = await getUserIdByEmail(user?.email?.address);
+            console.log(fetchUserId);
+            console.log(user.email.address);
+            setUserId(fetchedUserId);
+          }
         }
-        if (userId === null){
-          throw new Error("User not authenticated or ID not found");
-        }
-        const { webpage, txHash, cid, deploymentUrl, name, w3nameUrl } =
-        await createWebpageWithName(userId, domain, content);
-
-      setDeployedUrl(w3nameUrl || deploymentUrl);
-      setW3name(name);
-      console.log(
-        `Deployed successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${
-          w3nameUrl || deploymentUrl
-        }, W3name: ${name}`
-      );
+    
+        fetchUserId();
+      }, [authenticated, user]);
+    
+      console.log(userId);
+      console.log(isInitialized)
+      const handleDeploy = async () => {
+        setIsDeploying(true);
+        setDeploymentError("");
+        try {
+          if (!isInitialized) {
+            throw new Error("Clients not initialized");
+          }
+          if (userId === null) {
+            throw new Error("User not authenticated or ID not found");
+          }
+    
+          const { webpage, txHash, cid, deploymentUrl, name, w3nameUrl } =
+            await createWebpageWithName(userId, domain, content);
+    
+          setDeployedUrl(w3nameUrl || deploymentUrl);
+          setW3name(name);
+          console.log(
+            `Deployed successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${
+              w3nameUrl || deploymentUrl
+            }, W3name: ${name}`
+          );
 
       // Refresh the user's webpages
       const updatedWebpages = await getUserWebpages(userId);

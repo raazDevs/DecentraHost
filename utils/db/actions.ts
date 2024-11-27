@@ -57,6 +57,7 @@ export async function createOrUpdateUser(address: string, email: string) {
   let contract: ethers.Contract;
 
   export async function initializeClients(userEmail: string) {
+    console.log(userEmail, "||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||")
     web3StorageClient = await create();
   
     // Authenticate and select a space using the user's email
