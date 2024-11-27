@@ -1,6 +1,7 @@
 "use client"
 import{ useEffect, useState} from "react"
 import { Sidebar } from '@/components/ui/sidebar';
+import { ExampleWebsites } from "@/components/ExampleWebsite";
 
 type Webpage = {
   webpages: {
@@ -39,9 +40,6 @@ export default function Dashboard() {
         { name: "Sites", icon: Layout },
         { name: "Deploy", icon: Rocket },
         { name: "Manage Websites", icon: GitBranch },
-        { name: "Tokens", icon: Zap },
-        { name: "AI Website", icon: Cpu },
-        { name: "Decentralized CDN", icon: Network },
         { name: "Search Engine", icon: Search },
         { name: "Example Websites", icon: Globe },
         { name: "Smart Contracts", icon: Shield },
@@ -212,55 +210,16 @@ export default function Dashboard() {
     const handleUrlClick = (url: string) => {
       window.open(url, "_blank", "noopener,noreferrer");
     };
-  
-    const handleAIWebsiteDeploy = async (domain: string, content: string) => {
-      setAiDeploymentStatus({
-        isDeploying: true,
-        deployedUrl: "",
-        ipfsUrl: "",
-        error: "",
-      });
-      setDeploymentError("");
-      console.log(userId);
-  
-      try {
-        if (!isInitialized || userId === null) {
-          throw new Error("Cannot deploy: missing initialization or user ID");
-        }
-  
-        const { webpage, txHash, cid, deploymentUrl, name, w3nameUrl } =
-          await createWebpageWithName(userId, domain, content);
-  
-        const ipfsUrl = `https://dweb.link/ipfs/${cid}`;
-        const finalDeployedUrl = w3nameUrl || deploymentUrl;
-  
-        setAiDeploymentStatus({
-          isDeploying: false,
-          deployedUrl: finalDeployedUrl,
-          ipfsUrl: ipfsUrl,
-          error: "",
-        });
-  
-        setDeployedUrl(finalDeployedUrl);
-        setW3name(name);
-        console.log(
-          `Deployed AI-generated website successfully. Transaction hash: ${txHash}, CID: ${cid}, URL: ${finalDeployedUrl}, W3name: ${name}`
-        );
-  
-        // Refresh the user's webpages
-        const updatedWebpages = await getUserWebpages(userId);
-        setUserWebpages(updatedWebpages as Webpage[]);
-      } catch (error: any) {
-        console.error("AI website deployment failed:", error);
-        setAiDeploymentStatus({
-          isDeploying: false,
-          deployedUrl: "",
-          ipfsUrl: "",
-          error: `AI website deployment failed: ${error.message}`,
-        });
-        setDeploymentError(`AI website deployment failed: ${error.message}`);
-      }
+
+    const truncateUrl = (url: string, maxLength: number = 30) => {
+      if (!url) return "";
+      if (url.length <= maxLength) return url;
+      const start = url.substring(0, maxLength / 2 - 2);
+      const end = url.substring(url.length - maxLength / 2 + 2);
+      return `${start}...${end}`;
     };
+
+    
   
     return(
       <div className="min-h-screen bg-black text-grey-300">
@@ -285,7 +244,8 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">
-                  0
+                  
+                {userWebpages.length}
                 </div>
               </CardContent>
             </Card>
@@ -298,8 +258,7 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">
-                  N/A
-                  {/* {userWebpages.length > 0
+                  {userWebpages.length > 0
                     ? new Date(
                         Math.max(
                           ...userWebpages
@@ -307,7 +266,7 @@ export default function Dashboard() {
                             .map((w) => w.deployments!.deployedAt!.getTime())
                         )
                       ).toLocaleDateString()
-                    : "N/A"} */}
+                    : "N/A"}
                 </div>
               </CardContent>
             </Card>
@@ -320,15 +279,167 @@ export default function Dashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-white">
-                  {/* {userWebpages.filter((w) => w.deployments).length} */}
+                  {userWebpages.filter((w) => w.deployments).length}
+                  
                 </div>
               </CardContent>
             </Card>
             </div>
-            {activeTab === "Sites" && <p>Sites</p>}
-            {activeTab === "Deploy" && (
-              <>
-               <Card className="bg-[#0a0a0a] border-[#18181b]">
+            {activeTab === "Sites" && (
+            <>
+              <Card className="bg-[#0a0a0a] border-[#18181b] mb-8">
+                <CardHeader className="flex flex-col items-stretch space-y-0 border-b p-0 sm:flex-row">
+                  <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5 sm:py-6">
+                    <CardTitle className="text-2xl text-white">
+                      Website Traffic Overview
+                    </CardTitle>
+                    <CardDescription className="text-gray-400">
+                      Visitor trends across desktop and mobile platforms over
+                      the past quarter
+                    </CardDescription>
+                  </div>
+                  <div className="flex">
+                    {["desktop", "mobile"].map((key) => {
+                      const chart = key as keyof typeof chartConfig;
+                      return (
+                        <button
+                          key={chart}
+                          data-active={activeChart === chart}
+                          className="relative z-30 flex flex-1 flex-col justify-center gap-1 border-t px-6 py-4 text-left even:border-l data-[active=true]:bg-muted/20 sm:border-l sm:border-t-0 sm:px-8 sm:py-6"
+                          onClick={() => setActiveChart(chart)}
+                        >
+                          <span className="text-sm text-white">
+                            {chartConfig[chart].label}
+                          </span>
+                          <span className="text-5xl font-bold text-white">
+                            {total[chart].toLocaleString()}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </CardHeader>
+                <CardContent className="px-2 sm:p-6">
+                  <ChartContainer
+                    config={chartConfig}
+                    className="aspect-auto h-[250px] w-full bg-[#0a0a0a]"
+                  >
+                    <BarChart
+                      data={chartData}
+                      margin={{ left: 0, right: 0, top: 0, bottom: 20 }}
+                    >
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={8}
+                        minTickGap={32}
+                        tick={{ fill: "#666" }}
+                        tickFormatter={(value) => {
+                          const date = new Date(value);
+                          return date.toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          });
+                        }}
+                      />
+                      <ChartTooltip
+                        content={
+                          <ChartTooltipContent
+                            className="bg-[#1a1a1a] text-white border-none rounded-md shadow-lg"
+                            nameKey={activeChart}
+                            labelFormatter={(value) => {
+                              return new Date(value).toLocaleDateString(
+                                "en-US",
+                                {
+                                  month: "short",
+                                  day: "numeric",
+                                  year: "numeric",
+                                }
+                              );
+                            }}
+                          />
+                        }
+                      />
+                      <Bar
+                        dataKey={activeChart}
+                        fill="#3b82f6"
+                        radius={[4, 4, 0, 0]}
+                      />
+                    </BarChart>
+                  </ChartContainer>
+                  {userWebpages.length === 0 && (
+                    <p className="text-xs text-gray-500 mt-2 text-center">
+                      It may take up to 24 hours to update the count.
+                    </p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2 text-center">
+                    Please note: It may take up to 48 hours to load and display
+                    all data.
+                  </p>
+                </CardContent>
+              </Card>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userWebpages.map((webpage) => (
+                  <Card
+                    key={webpage.webpages.id}
+                    className="bg-[#0a0a0a] border-[#18181b]"
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-white">
+                        <span className="flex items-center">
+                          <Globe className="mr-2 h-4 w-4" />
+                          {webpage.webpages.domain}
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p
+                        className="mb-2 text-sm text-blue-400 cursor-pointer hover:underline overflow-hidden text-ellipsis"
+                        onClick={() =>
+                          handleUrlClick(
+                            webpage.webpages.name
+                              ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                              : webpage.deployments?.deploymentUrl || ""
+                          )
+                        }
+                        title={
+                          webpage.webpages.name
+                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                            : webpage.deployments?.deploymentUrl
+                        }
+                      >
+                        {truncateUrl(
+                          webpage.webpages.name
+                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                            : webpage.deployments?.deploymentUrl || ""
+                        )}
+                      </p>
+                      <p className="mb-2 text-sm text-gray-500">
+                        Deployed:{" "}
+                        {webpage.deployments?.deployedAt?.toLocaleString()}
+                      </p>
+                      <p className="mb-2 text-sm overflow-hidden text-ellipsis text-gray-500">
+                        TX: {webpage.deployments?.transactionHash.slice(0, 10)}
+                        ...
+                      </p>
+                      <Button
+                        onClick={() => handleEdit(webpage)}
+                        className="w-full bg-secondary hover:bg-gray-700 text-white"
+                      >
+                        Edit
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </>
+          )}
+
+          {activeTab === "Deploy" && (
+            <>
+              <Card className="bg-[#0a0a0a] border-[#18181b]">
                 <CardHeader>
                   <CardTitle className="text-2xl text-white">
                     {selectedWebpage ? "Edit Website" : "Deploy a New Website"}
@@ -365,19 +476,17 @@ export default function Dashboard() {
                       />
                     </div>
                     <Button
-                      // onClick={selectedWebpage ? handleUpdate : handleDeploy}
-                      onClick={handleDeploy}
+                      onClick={selectedWebpage ? handleUpdate : handleDeploy}
                       disabled={
                         isDeploying ||
                         !domain ||
-                        !content
-                        // !isInitialized ||
-                        // userId === null
+                        !content ||
+                        !isInitialized ||
+                        userId === null
                       }
                       size="lg"
                       className="bg-blue-600 hover:bg-blue-500 text-white"
                     >
-                      {selectedWebpage ? "Update Website" : "Deploy to HTTP3"}
                       {isDeploying ? (
                         <>
                           <Loader2 className="mr-2 h-5 w-5 animate-spin" />
@@ -405,7 +514,7 @@ export default function Dashboard() {
                     <CardTitle className="text-white">Preview</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="border bg-white p-4 rounded-lg">
+                    <div className="border border-[#18181b] p-4 rounded-lg">
                       <iframe
                         srcDoc={content}
                         style={{
@@ -419,10 +528,73 @@ export default function Dashboard() {
                   </CardContent>
                 </Card>
               )}
-              </>
-            )}
+            </>
+          )}
+
+          {activeTab === "Manage Websites" && (
+            <div>
+              <h2 className="text-2xl font-bold mb-2 text-white">
+                Manage Your Websites
+              </h2>
+              <p className="mt-2 mb-6 text-gray-400">
+                Note: This section allows manual management of your websites.
+                Automated CI/CD features are coming soon!
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {userWebpages.map((webpage) => (
+                  <Card
+                    key={webpage.webpages.id}
+                    className="bg-[#0a0a0a] border-[#18181b]"
+                  >
+                    <CardHeader>
+                      <CardTitle className="flex items-center justify-between text-white">
+                        <span className="flex items-center">
+                          <Globe className="mr-2 h-4 w-4" />
+                          {webpage.webpages.domain}
+                        </span>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p
+                        className="mb-2 text-sm text-blue-400 cursor-pointer hover:underline overflow-hidden text-ellipsis"
+                        onClick={() =>
+                          handleUrlClick(
+                            webpage.webpages.name
+                              ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                              : webpage.deployments?.deploymentUrl || ""
+                          )
+                        }
+                        title={
+                          webpage.webpages.name
+                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                            : webpage.deployments?.deploymentUrl
+                        }
+                      >
+                        {truncateUrl(
+                          webpage.webpages.name
+                            ? `https://dweb.link/ipfs/${webpage.webpages.cid}`
+                            : webpage.deployments?.deploymentUrl || ""
+                        )}
+                      </p>
+                      <p className="mb-2 text-sm text-gray-500">
+                        Deployed:{" "}
+                        {webpage.deployments?.deployedAt?.toLocaleString()}
+                      </p>
+                      <p className="mb-2 text-sm overflow-hidden text-ellipsis text-gray-500">
+                        TX: {webpage.deployments?.transactionHash.slice(0, 10)}
+                        ...
+                      </p>
+                      <Button
+                        onClick={() => handleEdit(webpage)}
+                        className="w-full bg-gray-800 hover:bg-gray-700 text-white"
+                      >
+                        Edit
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
-        </div>
-        </div>
-    )
-}
+          )}
+          {activeTab === "Example Websites" && <ExampleWebsites />}
+          
