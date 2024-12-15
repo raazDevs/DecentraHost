@@ -24,7 +24,7 @@ export function Sidebar({ items, activeItem, setActiveItem }: SidebarProps) {
             width={32}
             height={32}
           />
-          <span className="text-xl font-bold">HTTP3</span>
+          <span className="text-xl font-bold">DecentraHost</span>
         </Link>
       </div>
       <nav className="flex-1 p-4">

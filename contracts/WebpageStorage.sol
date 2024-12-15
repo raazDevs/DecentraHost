@@ -1,5 +1,5 @@
 //
-pragma solidity ^0.8.27;
+pragma solidity ^0.8.24;
 
 contract WebpageStorage {
     struct Webpage {
@@ -51,5 +51,47 @@ contract WebpageStorage {
 
     function getUserWebpages(address user) public view returns (string[] memory) {
         return userWebpages[user];
+    }
+
+    function createProposal(string memory description) public returns (uint256) {
+        proposalCount++;
+        Proposal storage newProposal = proposals[proposalCount];
+        newProposal.id = proposalCount;
+        newProposal.proposer = msg.sender;
+        newProposal.description = description;
+        newProposal.startTime = block.timestamp;
+        newProposal.endTime = block.timestamp + VOTING_PERIOD;
+
+        emit ProposalCreated(proposalCount, msg.sender, description);
+        return proposalCount;
+    }
+
+    function vote(uint256 proposalId, bool support) public {
+        require(proposalId > 0 && proposalId <= proposalCount, "Invalid proposal ID");
+        require(!hasVoted[msg.sender][proposalId], "Already voted on this proposal");
+        require(block.timestamp <= proposals[proposalId].endTime, "Voting period has ended");
+
+        if (support) {
+            proposals[proposalId].forVotes++;
+        } else {
+            proposals[proposalId].againstVotes++;
+        }
+
+        hasVoted[msg.sender][proposalId] = true;
+        emit Voted(proposalId, msg.sender, support);
+    }
+
+    function executeProposal(uint256 proposalId) public {
+        require(proposalId > 0 && proposalId <= proposalCount, "Invalid proposal ID");
+        Proposal storage proposal = proposals[proposalId];
+        require(!proposal.executed, "Proposal already executed");
+        require(block.timestamp > proposal.endTime + EXECUTION_DELAY, "Execution delay not met");
+        require(proposal.forVotes > proposal.againstVotes, "Proposal did not pass");
+
+        proposal.executed = true;
+        // Here you would implement the actual execution of the proposal
+        // This could involve calling other functions or updating contract state
+
+        emit ProposalExecuted(proposalId);
     }
 }

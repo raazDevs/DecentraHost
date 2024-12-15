@@ -1,14 +1,38 @@
-import DeveloperTools from "@/components/DeveloperTools";
-import { ThemeProvider } from "@/components/theme-provider";
-import { Button } from "@/components/ui/button";
-
-import { ArrowRight, BarChart, Cpu, Globe, Network, Search, Zap} from "lucide-react";
-import { headers } from "next/headers";
+"use client";
 import Image from "next/image";
 import Link from "next/link";
+import DeveloperTools from "@/components/DeveloperTools";
+import UserAccess from "@/components/UserAccess";
+import {
+  ArrowRight,
+  Code,
+  Globe,
+  Zap,
+  Menu,
+  Shield,
+  BarChart,
+  Coins,
+  Network,
+  Search,
+  Cpu,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ModeToggle } from "@/components/mode-toggle";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2 } from "lucide-react";
+import { storeWebpageOnChain } from "@/utils/db/actions";
+import { createWebpage } from "@/utils/db/actions";
 
 export default function Home() {
-
   const features = [
     {
       icon: Globe,
@@ -22,12 +46,7 @@ export default function Home() {
       description:
         "Automatic deployments from GitHub with instant preview links and version control.",
     },
-    {
-      icon: Cpu,
-      title: "Real-Time Code Editor",
-      description:
-        "Real-time code editor for writing and deploying code directly to the blockchain.",
-    },
+    
     {
       icon: Search,
       title: "Decentralized Search Engine",
@@ -48,11 +67,30 @@ export default function Home() {
     },
   ];
 
+  const [domain, setDomain] = useState("");
+  const [content, setContent] = useState("");
+  const [isDeploying, setIsDeploying] = useState(false);
+  const [deployedUrl, setDeployedUrl] = useState("");
 
-  
+  const handleDeploy = async () => {
+    setIsDeploying(true);
+    try {
+      // Call the createWebpage function
+      const { txHash, cid } = await createWebpage("4ffdsfdf", domain, content); // Assuming userId 1 for now
 
+      // Set the deployed URL
+      setDeployedUrl(`https://http3.io/${domain}`);
 
-
+      console.log(
+        `Deployed successfully. Transaction hash: ${txHash}, CID: ${cid}`
+      );
+    } catch (error) {
+      console.error("Deployment failed:", error);
+      // Handle error (e.g., show an error message to the user)
+    } finally {
+      setIsDeploying(false);
+    }
+  };
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
@@ -61,7 +99,7 @@ export default function Home() {
           <Image
             className="mx-auto text-white mb-4"
             src="/svg/lock-square-rounded.svg"
-            alt="HTTP3 logo"
+            alt="DecentraHost logo"
             width={70}
             height={38}
             priority
@@ -71,30 +109,28 @@ export default function Home() {
             <span className="text-primary">Smart Contracts</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Host timeless web projects like calculators and unit converters on the blockchain for free! No hosting costs, no expirations—ensure your simple sites live forever with HTTP3's decentralized hosting.
+            Host your legacy websites like calculators and unit converters on
+            the blockchain, absolutely free! No hosting fees, no expiration
+            dates. Preserve your simple web projects forever with HTTP3's
+            decentralized hosting.
           </p>
-
-
-          <Link href={"/dashboard"}>
-
-          <Button size="lg" className="mr-4">
-            Deploy for Free Now <ArrowRight className="ml-2" />
-          </Button>
-
+          <Link href={"/login"}>
+            <Button size="lg" className="mr-4">
+              Deploy for Free Now <ArrowRight className="ml-2" />
+            </Button>
           </Link>
-
+          <Link href={"/docs"}>
           <Button size="lg" variant="outline">
             Learn How It Works
           </Button>
+          </Link>
         </header>
 
         <main className="max-w-6xl mx-auto">
-        <section className="mb-16 text-center">
+          <section className="mb-16 text-center">
             <h2 className="text-3xl font-semibold mb-8">
               Revolutionary Web3 Hosting Platform
             </h2>
-
-
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
               {features.map((feature, index) => (
                 <div
@@ -109,19 +145,16 @@ export default function Home() {
                 </div>
               ))}
             </div>
-            
           </section>
+          <DeveloperTools />
+          <UserAccess />
 
-
-
-
+          {/* New sections can be added here for Marketplace, Governance, etc. */}
         </main>
-        <DeveloperTools/>
 
         <footer className="mt-16 text-center text-sm text-muted-foreground">
           <p>&copy; 2024 DecentraHost. All rights reserved.</p>
         </footer>
-
       </div>
     </ThemeProvider>
   );

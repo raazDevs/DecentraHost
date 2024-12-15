@@ -15,7 +15,7 @@ module.exports = {
       gasPrice: 1000000000,
     },
   },
-  solidity: "0.8.27",
+  solidity: "0.8.24",
   allowUnlimitedContractSize: true,
   throwOnTransactionFailures: true,
   throwOnCallFailures: true,
